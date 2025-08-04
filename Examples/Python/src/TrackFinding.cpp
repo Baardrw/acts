@@ -17,6 +17,7 @@
 #include "Acts/TrackFinding/MeasurementSelector.hpp"
 #include "Acts/Utilities/Logger.hpp"
 #include "ActsExamples/EventData/SpacePointContainer.hpp"
+#include "ActsExamples/TrackFinding/AdaptiveHoughTransformSeeder.hpp"
 #include "ActsExamples/TrackFinding/GbtsSeedingAlgorithm.hpp"
 #include "ActsExamples/TrackFinding/GridTripletSeedingAlgorithm.hpp"
 #include "ActsExamples/TrackFinding/HitValidator.hpp"
@@ -191,9 +192,16 @@ void addTrackFinding(Context& ctx) {
       houghHistSize_x, houghHistSize_y, hitExtend_x, threshold,
       localMaxWindowSize, kA);
 
-  ACTS_PYTHON_DECLARE_ALGORITHM(ActsExamples::MuonHoughSeeder, mex,
-                                "MuonHoughSeeder", inTruthSegments,
-                                inSpacePoints, outHoughMax);
+  ACTS_PYTHON_DECLARE_ALGORITHM(
+      ActsExamples::AdaptiveHoughTransformSeeder, mex,
+      "AdaptiveHoughTransformSeeder", inputSpacePoints, outputSeeds,
+      outputProtoTracks, trackingGeometry, qOverPtMin, qOverPtMinBinSize,
+      phiMinBinSize, threshold, noiseThreshold, deduplicate, inverseA,
+      doSecondPhase, zRange, cotThetaRange, cotThetaMinBinSize, zMinBinSize);
+
+  ACTS_PYTHON_DECLARE_ALGORITHM(
+      ActsExamples::MuonHoughSeeder, mex, "MuonHoughSeeder", inTruthSegments,
+      inSpacePoints, outHoughMax, nBinsTanTheta, nBinsY0, nBinsTanPhi, nBinsX0);
 
   ACTS_PYTHON_DECLARE_ALGORITHM(
       ActsExamples::TrackParamsEstimationAlgorithm, mex,

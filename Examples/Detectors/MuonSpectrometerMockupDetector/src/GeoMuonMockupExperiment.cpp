@@ -111,11 +111,11 @@ Acts::GeoModelTree GeoMuonMockupExperiment::constructMS() {
     const double midWheelZ = barrelZ + 0.5 * m_stationHeightEndcap;
     const double outWheelZ =
         midWheelZ + m_stationHeightEndcap + m_cfg.bigWheelDistZ;
-
-    assembleBigWheel(muonEnvelope, MuonLayer::Middle, midWheelZ);
-    assembleBigWheel(muonEnvelope, MuonLayer::Middle, -midWheelZ);
-    assembleBigWheel(muonEnvelope, MuonLayer::Outer, outWheelZ);
-    assembleBigWheel(muonEnvelope, MuonLayer::Outer, -outWheelZ);
+    using enum ActsExamples::GeoMuonMockupExperiment::MuonLayer;
+    assembleBigWheel(muonEnvelope, Middle, midWheelZ);
+    assembleBigWheel(muonEnvelope, Middle, -midWheelZ);
+    assembleBigWheel(muonEnvelope, Outer, outWheelZ);
+    assembleBigWheel(muonEnvelope, Outer, -outWheelZ);
   }
   const unsigned nChambers =
       2 * m_cfg.nSectors * m_cfg.nEtaStations *
@@ -165,7 +165,9 @@ Acts::GeoModelTree GeoMuonMockupExperiment::constructMS() {
     GMDBManager db{m_cfg.dbName};
     // check the DB connection
     if (!db.checkIsDBOpen()) {
-      THROW_EXCEPTION("It was not possible to open the DB correctly!");
+      throw std::runtime_error(
+          "GeoMuonMockupExperiment::constructMS() - It was not possible to "
+          "open the DB correctly!");
     }
     // init the GeoModel node action
     GeoModelIO::WriteGeoModel writeGeoDB{db};
@@ -493,7 +495,7 @@ FpvLink GeoMuonMockupExperiment::assembleRpcChamber(const double chamberWidth) {
         make_intrusive<GeoBox>(0.5 * s_rpcGasHeight, rpcBox->getYHalfLength(),
                                rpcBox->getZHalfLength());
     auto gasLogVol = cacheVolume(make_intrusive<GeoLogVol>(
-        "RpcGas", cacheShape(gasBox), matMan->getMaterial("std::ArCO2")));
+        "RpcGasGap", cacheShape(gasBox), matMan->getMaterial("std::ArCO2")));
 
     rpcEnvelope->add(geoId(gap));
     rpcEnvelope->add(makeTransform(GeoTrf::TranslateX3D(currentX)));

@@ -1,7 +1,6 @@
 import os
 import acts
 import argparse
-
 from acts import (
     logging,
     GeometryContext,
@@ -53,16 +52,13 @@ def runGeant4(
     addParticleGun(
         s,
         outputDirRoot=outputDir / "PG",
-        momentumConfig=MomentumConfig(
-            50.0 * u.GeV, 60.0 * u.GeV, transverse=True),
+        momentumConfig=MomentumConfig(50.0 * u.GeV, 60.0 * u.GeV, transverse=True),
         etaConfig=EtaConfig(-1.0, 1.0, uniform=True),
         phiConfig=PhiConfig(0.0, 360.0 * u.degree),
-        particleConfig=ParticleConfig(
-            1, acts.PdgParticle.eMuon, randomizeCharge=True),
+        particleConfig=ParticleConfig(1, acts.PdgParticle.eMuon, randomizeCharge=True),
         vtxGen=acts.examples.GaussianVertexGenerator(
             mean=acts.Vector4(0, 0, 0, 0),
-            stddev=acts.Vector4(0.0125 * u.mm, 0.0125 *
-                                u.mm, 55.5 * u.mm, 1.0 * u.ns),
+            stddev=acts.Vector4(0.0125 * u.mm, 0.0125 * u.mm, 55.5 * u.mm, 1.0 * u.ns),
         ),
         multiplicity=nMuonPerEvt,
         rnd=rnd,
@@ -110,8 +106,7 @@ def main():
         default="Muon",
     )
     parser.add_argument("--outDir", default="./", help="Output")
-    parser.add_argument("--nEvents", default=100,
-                        type=int, help="Number of events")
+    parser.add_argument("--nEvents", default=100, type=int, help="Number of events")
 
     args = parser.parse_args()
 
@@ -123,7 +118,7 @@ def main():
 
     # Read the geometry model from the database
     gmTree = None
-    # Use an external geo model file
+    ### Use an external geo model file
     if len(args.input):
         gmTree = gm.readFromDb(args.input)
         gmBuilderConfig.stationNames = ["BIL", "BML", "BOL"]
@@ -135,8 +130,7 @@ def main():
         mockUpCfg.nSectors = 12
         mockUpCfg.nEtaStations = 8
         mockUpCfg.buildEndcaps = False
-        mockUpBuilder = gm.GeoMuonMockupExperiment(
-            mockUpCfg, "GeoMockUpMS", logLevel)
+        mockUpBuilder = gm.GeoMuonMockupExperiment(mockUpCfg, "GeoMockUpMS", logLevel)
         gmBuilderConfig.stationNames = ["Inner", "Middle", "Outer"]
 
         gmTree = mockUpBuilder.constructMS()
@@ -149,7 +143,7 @@ def main():
         "MDTDriftGas",
     ]
     gmFactoryConfig.convertSubVolumes = True
-    gmFactoryConfig.convertBox = ["MDT"]
+    gmFactoryConfig.convertBox = ["MDT", "RPC"]
 
     gmFactory = gm.GeoModelDetectorObjectFactory(gmFactoryConfig, logLevel)
     # The options
@@ -172,10 +166,9 @@ def main():
         gmBuilderConfig, "GeoModelMuonMockupBuilder", acts.logging.INFO
     )
 
-    trackingGeometry = detector.buildTrackingGeometry(
-        gContext, trackingGeometryBuilder)
+    trackingGeometry = detector.buildTrackingGeometry(gContext, trackingGeometryBuilder)
 
-    sequencer = runGeant4(
+    runGeant4(
         detector=detector,
         trackingGeometry=trackingGeometry,
         field=field,
@@ -200,8 +193,7 @@ def main():
     obj_dir = Path(args.outDir) / "obj"
     obj_dir.mkdir(exist_ok=True)
 
-    writer = ObjTrackingGeometryWriter(
-        level=acts.logging.INFO, outputDir=str(obj_dir))
+    writer = ObjTrackingGeometryWriter(level=acts.logging.INFO, outputDir=str(obj_dir))
 
     writer.write(context, trackingGeometry)
 

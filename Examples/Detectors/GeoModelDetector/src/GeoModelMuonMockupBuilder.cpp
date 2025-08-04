@@ -45,17 +45,18 @@ GeoModelMuonMockupBuilder::trackingGeometry(
   cyl.setResizeStrategy(Acts::VolumeResizeStrategy::Gap);
 
   if (boundingBoxes.empty()) {
-    THROW_EXCEPTION(
-        "No converted bounding boxes in the configuration - provide volumes "
+    throw std::invalid_argument(
+        "GeoModelMuonMockupBuilder() -- No converted bounding boxes in the "
+        "configuration - provide volumes "
         "(e.g from the GeModelDetectorObjectFactory) ");
   }
 
   // Add the station nodes as static cylidner nodes
-  std::size_t layerId = 0;
+  std::size_t layerId = 1;
 
   for (const auto& str : m_cfg.stationNames) {
-    Acts::GeometryIdentifier geoIdNode =
-        Acts::GeometryIdentifier().withLayer(++layerId);
+    auto geoIdNode = Acts::GeometryIdentifier().withLayer(layerId);
+    ++layerId;
     auto node = buildBarrelNode(boundingBoxes, str, *m_cfg.volumeBoundFactory,
                                 geoIdNode);
     cyl.addChild(std::move(node));
@@ -86,7 +87,7 @@ GeoModelMuonMockupBuilder::buildBarrelNode(
     auto parent = box.fullPhysVol->getParent().get();
 
     if (parent == nullptr) {
-      THROW_EXCEPTION("No parent found for " << name);
+      throw std::domain_error("buildBarrelNode() No parent found for " + name);
     }
     commonStations[parent].push_back(box);
   }
@@ -97,7 +98,7 @@ GeoModelMuonMockupBuilder::buildBarrelNode(
     throw std::invalid_argument("No barrel stations could be found.");
   }
   volChambers.reserve(commonStations.size());
-  std::size_t stationNum = 0;
+  std::size_t stationNum = 1;
   double maxZ = std::numeric_limits<double>::lowest();
   for (const auto& [parentPhysVol, childrenTrkVols] : commonStations) {
     std::shared_ptr<Acts::Volume> parentVolume = Acts::GeoModel::convertVolume(
@@ -105,18 +106,18 @@ GeoModelMuonMockupBuilder::buildBarrelNode(
         parentPhysVol->getLogVol()->getShape(), boundFactory);
 
     auto chamberVolume = std::make_unique<Acts::TrackingVolume>(
-        *parentVolume, name + "Chamber_" + std::to_string(stationNum++));
+        *parentVolume, name + "Chamber_" + std::to_string(stationNum));
     chamberVolume->assignGeometryId(geoId.withVolume(stationNum));
-
+    ++stationNum;
     ACTS_VERBOSE("Boundaries of the chamber volume: "
                  << chamberVolume->boundarySurfaces().size());
 
-    std::size_t childVol = 0;
+    std::size_t childVol = 1;
     for (const auto& child : childrenTrkVols) {
       auto trVol =
           std::make_unique<Acts::TrackingVolume>(*child.volume, child.name);
-      trVol->assignGeometryId(
-          geoId.withVolume(stationNum).withExtra(++childVol));
+      trVol->assignGeometryId(geoId.withVolume(stationNum).withExtra(childVol));
+      ++childVol;
 
       // add the sensitives (tubes) in the constructed tracking volume
       for (const auto& surface : child.surfaces) {
