@@ -19,6 +19,7 @@
 #include "ActsExamples/EventData/SpacePointContainer.hpp"
 #include "ActsExamples/TrackFinding/GbtsSeedingAlgorithm.hpp"
 #include "ActsExamples/TrackFinding/GridTripletSeedingAlgorithm.hpp"
+#include "ActsExamples/TrackFinding/HitValidator.hpp"
 #include "ActsExamples/TrackFinding/HoughTransformSeeder.hpp"
 #include "ActsExamples/TrackFinding/MuonHoughSeeder.hpp"
 #include "ActsExamples/TrackFinding/SeedingAlgorithm.hpp"
@@ -173,6 +174,9 @@ void addTrackFinding(Context& ctx) {
                                 "SeedingOrthogonalAlgorithm", inputSpacePoints,
                                 outputSeeds, seedFilterConfig, seedFinderConfig,
                                 seedFinderOptions);
+
+  ACTS_PYTHON_DECLARE_ALGORITHM(ActsExamples::HitValidator, mex, "HitValidator",
+                                simHits, particlesSimulated, trackingGeometry);
 
   ACTS_PYTHON_DECLARE_ALGORITHM(
       ActsExamples::GbtsSeedingAlgorithm, mex, "GbtsSeedingAlgorithm",

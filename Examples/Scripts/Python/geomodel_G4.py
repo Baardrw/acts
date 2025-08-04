@@ -1,6 +1,7 @@
 import os
 import acts
 import argparse
+
 from acts import (
     logging,
     GeometryContext,
@@ -16,6 +17,8 @@ from acts.examples import (
 )
 from acts import geomodel as gm
 from acts import examples
+from acts.examples import HitValidator
+
 
 from pathlib import Path
 from propagation import runPropagation
@@ -50,13 +53,16 @@ def runGeant4(
     addParticleGun(
         s,
         outputDirRoot=outputDir / "PG",
-        momentumConfig=MomentumConfig(50.0 * u.GeV, 60.0 * u.GeV, transverse=True),
+        momentumConfig=MomentumConfig(
+            50.0 * u.GeV, 60.0 * u.GeV, transverse=True),
         etaConfig=EtaConfig(-1.0, 1.0, uniform=True),
         phiConfig=PhiConfig(0.0, 360.0 * u.degree),
-        particleConfig=ParticleConfig(1, acts.PdgParticle.eMuon, randomizeCharge=True),
+        particleConfig=ParticleConfig(
+            1, acts.PdgParticle.eMuon, randomizeCharge=True),
         vtxGen=acts.examples.GaussianVertexGenerator(
             mean=acts.Vector4(0, 0, 0, 0),
-            stddev=acts.Vector4(0.0125 * u.mm, 0.0125 * u.mm, 55.5 * u.mm, 1.0 * u.ns),
+            stddev=acts.Vector4(0.0125 * u.mm, 0.0125 *
+                                u.mm, 55.5 * u.mm, 1.0 * u.ns),
         ),
         multiplicity=nMuonPerEvt,
         rnd=rnd,
@@ -83,6 +89,11 @@ def main():
 
     u = acts.UnitConstants
 
+    # Delete the hit_validator output file if it exists
+    hit_validator_file = Path("hit_validator.csv")
+    if hit_validator_file.exists():
+        hit_validator_file.unlink()
+
     parser = ArgumentParser()
     parser.add_argument(
         "-i",
@@ -99,7 +110,8 @@ def main():
         default="Muon",
     )
     parser.add_argument("--outDir", default="./", help="Output")
-    parser.add_argument("--nEvents", default=100, type=int, help="Number of events")
+    parser.add_argument("--nEvents", default=100,
+                        type=int, help="Number of events")
 
     args = parser.parse_args()
 
@@ -111,7 +123,7 @@ def main():
 
     # Read the geometry model from the database
     gmTree = None
-    ### Use an external geo model file
+    # Use an external geo model file
     if len(args.input):
         gmTree = gm.readFromDb(args.input)
         gmBuilderConfig.stationNames = ["BIL", "BML", "BOL"]
@@ -123,7 +135,8 @@ def main():
         mockUpCfg.nSectors = 12
         mockUpCfg.nEtaStations = 8
         mockUpCfg.buildEndcaps = False
-        mockUpBuilder = gm.GeoMuonMockupExperiment(mockUpCfg, "GeoMockUpMS", logLevel)
+        mockUpBuilder = gm.GeoMuonMockupExperiment(
+            mockUpCfg, "GeoMockUpMS", logLevel)
         gmBuilderConfig.stationNames = ["Inner", "Middle", "Outer"]
 
         gmTree = mockUpBuilder.constructMS()
@@ -159,16 +172,25 @@ def main():
         gmBuilderConfig, "GeoModelMuonMockupBuilder", acts.logging.INFO
     )
 
-    trackingGeometry = detector.buildTrackingGeometry(gContext, trackingGeometryBuilder)
+    trackingGeometry = detector.buildTrackingGeometry(
+        gContext, trackingGeometryBuilder)
 
-    runGeant4(
+    sequencer = runGeant4(
         detector=detector,
         trackingGeometry=trackingGeometry,
         field=field,
         outputDir=args.outDir,
         volumeMappings=gmFactoryConfig.nameList,
         events=args.nEvents,
-    ).run()
+    )
+    theAlg = HitValidator(particlesSimulated="particles_simulated",
+                          simHits="simhits",
+                          trackingGeometry=trackingGeometry,
+                          level=acts.logging.INFO)
+    
+    sequencer.addAlgorithm(theAlg)
+
+    sequencer.run()
 
     # runPropagation(trackingGeometry, field, args.outDir).run()
 
@@ -178,7 +200,8 @@ def main():
     obj_dir = Path(args.outDir) / "obj"
     obj_dir.mkdir(exist_ok=True)
 
-    writer = ObjTrackingGeometryWriter(level=acts.logging.INFO, outputDir=str(obj_dir))
+    writer = ObjTrackingGeometryWriter(
+        level=acts.logging.INFO, outputDir=str(obj_dir))
 
     writer.write(context, trackingGeometry)
 

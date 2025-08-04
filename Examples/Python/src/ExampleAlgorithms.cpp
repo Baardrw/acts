@@ -13,6 +13,7 @@
 #include "ActsExamples/Io/Json/JsonGeometryList.hpp"
 #include "ActsExamples/Printers/ParticlesPrinter.hpp"
 #include "ActsExamples/Printers/TrackParametersPrinter.hpp"
+#include "ActsExamples/TrackFinding/HitValidator.hpp"
 #include "ActsExamples/Utilities/Range.hpp"
 #include "ActsExamples/Utilities/TrackSelectorAlgorithm.hpp"
 
@@ -45,6 +46,7 @@ void addExampleAlgorithms(Context& ctx) {
 
   ACTS_PYTHON_DECLARE_ALGORITHM(ActsExamples::TrackParametersPrinter, mex,
                                 "TrackParametersPrinter", inputTrackParameters);
+
 
   {
     using Alg = ActsExamples::TrackSelectorAlgorithm;

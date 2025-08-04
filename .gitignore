@@ -39,3 +39,6 @@ codegen/src/codegen.egg-info/
 !.gitlab-ci.yml
 !.clang-tidy
 !.oclint
+
+# Vscode cpp build files
+out/build/dev
